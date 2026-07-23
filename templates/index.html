@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimpleBrowser 3.0 — Anti-Detect Browser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-card: #1e2530;
+            --bg-input: #252d3a;
+            --bg-hover: #2d3544;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent: #58a6ff;
+            --accent-hover: #79c0ff;
+            --success: #3fb950;
+            --warning: #d29922;
+            --danger: #f85149;
+            --border: #30363d;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* Layout */
+        .app {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+        }
+
+        .logo {
+            padding: 0 20px 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .logo h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+        }
+
+        .logo p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .nav {
+            flex: 1;
+            padding: 0 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .nav-icon {
+            font-size: 18px;
+        }
+
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: var(--bg-card);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .status-dot.offline {
+            background: var(--danger);
+            box-shadow: 0 0 8px var(--danger);
+        }
+
+        /* Main Content */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h2 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(88, 166, 255, 0.3);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--bg-primary);
+        }
+
+        .btn-success:hover {
+            background: #2ea043;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #da3633;
+        }
+
+        .btn-ghost {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+        }
+
+        /* Cards */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .profile-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .profile-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+        }
+
+        .profile-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .profile-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-running {
+            background: rgba(63, 185, 80, 0.15);
+            color: var(--success);
+        }
+
+        .status-stopped {
+            background: rgba(139, 148, 158, 0.15);
+            color: var(--text-secondary);
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .profile-actions .btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px var(--shadow);
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+
+        /* Radio buttons */
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .radio-item:hover {
+            border-color: var(--accent);
+        }
+
+        .radio-item input[type="radio"] {
+            accent-color: var(--accent);
+        }
+
+        .radio-item.selected {
+            border-color: var(--accent);
+            background: rgba(88, 166, 255, 0.1);
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: rgba(63, 185, 80, 0.15);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(248, 81, 73, 0.15);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .alert-info {
+            background: rgba(88, 166, 255, 0.15);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+
+        /* Loading */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--bg-hover);
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>
+                    <span class="logo-icon">🌐</span>
+                    SimpleBrowser
+                </h1>
+                <p>v3.0 — Anti-Detect Browser</p>
+            </div>
+
+            <nav class="nav">
+                <div class="nav-item active" data-view="profiles">
+                    <span class="nav-icon">📋</span>
+                    <span>Profiles</span>
+                </div>
+                <div class="nav-item" data-view="extensions">
+                    <span class="nav-icon">🧩</span>
+                    <span>Extensions</span>
+                </div>
+                <div class="nav-item" data-view="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Settings</span>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="status-badge">
+                    <span class="status-dot" id="chromium-status"></span>
+                    <span id="chromium-text">Checking...</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="header">
+                <h2 id="page-title">Browser Profiles</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openProfileEditor()">
+                        <span>➕</span>
+                        <span>New Profile</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="content" id="content">
+                <!-- Dynamic content loaded here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Profile Editor Modal -->
+    <div class="modal-overlay" id="profile-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">New Profile</h3>
+                <button class="modal-close" onclick="closeProfileEditor()">✕</button>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab active" data-tab="general">General</button>
+                    <button class="tab" data-tab="proxy">Proxy</button>
+                    <button class="tab" data-tab="fingerprint">Fingerprint</button>
+                    <button class="tab" data-tab="advanced">Advanced</button>
+                    <button class="tab" data-tab="cookies">Cookies</button>
+                </div>
+
+                <!-- General Tab -->
+                <div class="tab-content active" id="tab-general">
+                    <div class="form-section">
+                        <div class="form-section-title">Profile Information</div>
+                        <div class="form-group">
+                            <label class="form-label">Profile Name</label>
+                            <input type="text" class="form-input" id="profile-name" placeholder="My Profile">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Notes</label>
+                            <input type="text" class="form-input" id="profile-notes" placeholder="Optional notes">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Proxy Tab -->
+                <div class="tab-content" id="tab-proxy">
+                    <div class="form-section">
+                        <div class="form-section-title">Proxy Configuration</div>
+                        
+                        <!-- Proxy Paste -->
+                        <div class="form-group">
+                            <label class="form-label">Quick Paste (IP:PORT or IP:PORT:USER:PASS)</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" class="form-input" id="proxy-paste" placeholder="192.168.1.1:8080:user:pass" style="flex: 1;">
+                                <button class="btn btn-ghost" onclick="parseProxyString()">Parse</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Proxy Type</label>
+                            <select class="form-select" id="proxy-type" onchange="toggleProxyFields()">
+                                <option value="none">None (Direct Connection)</option>
+                                <option value="http">HTTP</option>
+                                <option value="socks5">SOCKS5</option>
+                            </select>
+                        </div>
+                        
+                        <div id="proxy-fields">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Host</label>
+                                    <input type="text" class="form-input" id="proxy-host" placeholder="proxy.example.com">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Port</label>
+                                    <input type="text" class="form-input" id="proxy-port" placeholder="8080">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Username (optional)</label>
+                                    <input type="text" class="form-input" id="proxy-user" placeholder="username">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Password (optional)</label>
+                                    <input type="password" class="form-input" id="proxy-pass" placeholder="••••••••">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 12px; margin-top: 16px;">
+                            <button class="btn btn-success" onclick="validateProxy()">
+                                <span>✓</span>
+                                <span>Validate Proxy</span>
+                            </button>
+                            <button class="btn btn-primary" onclick="autoMatch()">
+                                <span>🎯</span>
+                                <span>Auto-Match Fingerprint</span>
+                            </button>
+                        </div>
+                        <div id="proxy-result" style="margin-top: 16px;"></div>
+                    </div>
+                    
+                    <!-- Debug Log Panel -->
+                    <div class="form-section">
+                        <div class="form-section-title">Debug Log</div>
+                        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                            <button class="btn btn-ghost" onclick="clearDebugLog()">Clear Log</button>
+                            <button class="btn btn-ghost" onclick="testProxyConnection()">Test Connection</button>
+                        </div>
+                        <div id="debug-log" style="
+                            background: var(--bg-input);
+                            border: 1px solid var(--border);
+                            border-radius: 8px;
+                            padding: 12px;
+                            height: 200px;
+                            overflow-y: auto;
+                            font-family: 'Courier New', monospace;
+                            font-size: 12px;
+                            line-height: 1.6;
+                        ">
+                            <div style="color: var(--text-muted);">Debug log will appear here...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fingerprint Tab -->
+                <div class="tab-content" id="tab-fingerprint">
+                    <div style="margin-bottom: 20px;">
+                        <button class="btn btn-primary" onclick="generateRandomFingerprint()">
+                            🎲 Generate Random Fingerprint
+                        </button>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                            Randomizes all fingerprint settings with realistic values
+                        </p>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">User Agent</div>
+                        <div class="form-group">
+                            <label class="form-label">User Agent String</label>
+                            <input type="text" class="form-input" id="user-agent">
+                            <button class="btn btn-ghost" style="margin-top: 8px;" onclick="randomizeUA()">
+                                🎲 Randomize UA Only
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">Screen & Locale</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Resolution</label>
+                                <select class="form-select" id="resolution">
+                                    <option value="1920x1080">1920x1080</option>
+                                    <option value="1366x768">1366x768</option>
+                                    <option value="1536x864">1536x864</option>
+                                    <option value="2560x1440">2560x1440</option>
+                                    <option value="3840x2160">3840x2160</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Timezone</label>
+                                <select class="form-select" id="timezone"></select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Language</label>
+                                <select class="form-select" id="language"></select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">WebRTC</label>
+                                <select class="form-select" id="webrtc">
+                                    <option value="disabled">Disabled (Recommended)</option>
+                                    <option value="enabled">Enabled</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Tab -->
+                <div class="tab-content" id="tab-advanced">
+                    <div class="form-section">
+                        <div class="form-section-title">Canvas Fingerprint</div>
+                        <div class="radio-group">
+                            <label class="radio-item selected">
+                                <input type="radio" name="canvas" value="noise" checked>
+                                <div>
+                                    <div style="font-weight: 600;">Add Noise (Recommended)</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">Adds subtle noise to make fingerprint unique</div>
+                                </div>
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="canvas" value="off">
+                                <div>
+                                    <div style="font-weight: 600;">Disabled</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">No canvas spoofing</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">WebGL Fingerprint</div>
+                        <div class="radio-group">
+                            <label class="radio-item selected">
+                                <input type="radio" name="webgl" value="custom" checked>
+                                <div>
+                                    <div style="font-weight: 600;">Custom Vendor/Renderer (Recommended)</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">Spoof GPU information</div>
+                                </div>
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="webgl" value="off">
+                                <div>
+                                    <div style="font-weight: 600;">Disabled</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">No WebGL spoofing</div>
+                                </div>
+                            </label>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <div class="form-group">
+                                <label class="form-label">WebGL Vendor</label>
+                                <input type="text" class="form-input" id="webgl-vendor" value="Google Inc. (NVIDIA)">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">WebGL Renderer</label>
+                                <input type="text" class="form-input" id="webgl-renderer" value="ANGLE (NVIDIA, NVIDIA GeForce GTX 1080 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">Audio Fingerprint</div>
+                        <div class="radio-group">
+                            <label class="radio-item selected">
+                                <input type="radio" name="audio" value="noise" checked>
+                                <div>
+                                    <div style="font-weight: 600;">Add Noise (Recommended)</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">Adds noise to audio context</div>
+                                </div>
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="audio" value="off">
+                                <div>
+                                    <div style="font-weight: 600;">Disabled</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">No audio spoofing</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">Hardware Properties</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">CPU Cores</label>
+                                <select class="form-select" id="hardware-concurrency">
+                                    <option value="2">2</option>
+                                    <option value="4">4</option>
+                                    <option value="6">6</option>
+                                    <option value="8" selected>8</option>
+                                    <option value="12">12</option>
+                                    <option value="16">16</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Memory (GB)</label>
+                                <select class="form-select" id="device-memory">
+                                    <option value="2">2</option>
+                                    <option value="4">4</option>
+                                    <option value="8" selected>8</option>
+                                    <option value="16">16</option>
+                                    <option value="32">32</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cookies Tab -->
+                <div class="tab-content" id="tab-cookies">
+                    <div class="form-section">
+                        <div class="form-section-title">Cookie Management</div>
+                        <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                            Import or export cookies for this profile. Useful for backing up sessions or transferring between profiles.
+                        </p>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button class="btn btn-ghost" onclick="exportCookies('json')">
+                                📤 Export as JSON
+                            </button>
+                            <button class="btn btn-ghost" onclick="exportCookies('text')">
+                                📤 Export as Text
+                            </button>
+                            <button class="btn btn-ghost" onclick="importCookies('json')">
+                                📥 Import from JSON
+                            </button>
+                            <button class="btn btn-ghost" onclick="importCookies('text')">
+                                📥 Import from Text
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">Profile Management</div>
+                        <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                            Export or import the entire profile configuration including all settings.
+                        </p>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn btn-ghost" onclick="exportProfile()">
+                                💾 Export Profile
+                            </button>
+                            <button class="btn btn-ghost" onclick="importProfile()">
+                                📂 Import Profile
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">Virtual Camera</div>
+                        <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                            Use a virtual camera with custom images/videos and effects instead of a real webcam.
+                        </p>
+                        <button class="btn btn-primary" onclick="openVirtualCamera()">
+                            📷 Configure Virtual Camera
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeProfileEditor()">Cancel</button>
+                <button class="btn btn-success" onclick="saveProfile()">
+                    💾 Save Profile
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let profiles = [];
+        let editingProfile = null;
+        let countries = [];
+
+        // Initialize
+        async function init() {
+            await loadCountries();
+            await loadProfiles();
+            await checkChromium();
+            setupTabs();
+            setupNavigation();
+        }
+
+        // Setup navigation
+        function setupNavigation() {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const view = item.dataset.view;
+                    
+                    // Update active state
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    // Load appropriate view
+                    if (view === 'profiles') {
+                        document.getElementById('page-title').textContent = 'Browser Profiles';
+                        loadProfiles();
+                    } else if (view === 'extensions') {
+                        document.getElementById('page-title').textContent = 'Extensions';
+                        loadExtensionsView();
+                    } else if (view === 'settings') {
+                        document.getElementById('page-title').textContent = 'Settings';
+                        loadSettingsView();
+                    }
+                });
+            });
+        }
+
+        // Load extensions view
+        async function loadExtensionsView() {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div style="max-width: 800px;">
+                    <div class="form-section">
+                        <div class="form-section-title">Built-in Extensions</div>
+                        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-input); border-radius: 8px;">
+                            <span style="font-size: 24px;">🛡️</span>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600;">Fingerprint Shield v3.0</div>
+                                <div style="font-size: 13px; color: var(--text-secondary);">Anti-detect fingerprint protection (Canvas, WebGL, Audio, ClientRects)</div>
+                            </div>
+                            <span class="profile-status status-running">Active</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="form-section-title">User Extensions</div>
+                        <div id="user-extensions-list">
+                            <p style="color: var(--text-secondary);">No user extensions installed</p>
+                        </div>
+                        <div style="display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;">
+                            <button class="btn btn-ghost" onclick="importExtensionCRX()">
+                                📦 Import CRX File
+                            </button>
+                            <button class="btn btn-ghost" onclick="importExtensionFolder()">
+                                📁 Import Folder
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Load extensions list
+            try {
+                const res = await fetch('/api/extensions');
+                const exts = await res.json();
+                if (exts.length > 0) {
+                    const list = document.getElementById('user-extensions-list');
+                    list.innerHTML = exts.map(ext => `
+                        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-input); border-radius: 8px; margin-bottom: 8px;">
+                            <span style="font-size: 24px;">🧩</span>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600;">${ext.name} v${ext.version}</div>
+                                <div style="font-size: 13px; color: var(--text-secondary);">${ext.description || 'No description'}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error('Failed to load extensions:', e);
+            }
+        }
+
+        // Load settings view
+        function loadSettingsView() {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div style="max-width: 800px;">
+                    <div class="form-section">
+                        <div class="form-section-title">Chromium Browser</div>
+                        <div id="chromium-info">
+                            <div class="spinner"></div> Checking...
+                        </div>
+                        <button class="btn btn-ghost" style="margin-top: 12px;" onclick="refreshChromiumStatus()">
+                            🔄 Refresh Status
+                        </button>
+                        <button class="btn btn-primary" style="margin-top: 12px; margin-left: 8px;" onclick="downloadChromium()">
+                            📥 Download Chrome for Testing
+                        </button>
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="form-section-title">Data Storage</div>
+                        <p style="color: var(--text-secondary); margin-bottom: 8px;">
+                            Profiles are stored in:
+                        </p>
+                        <code style="background: var(--bg-input); padding: 8px 12px; border-radius: 6px; display: block;">
+                            profile_data/
+                        </code>
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="form-section-title">About</div>
+                        <p style="color: var(--text-secondary); line-height: 1.6;">
+                            <strong>SimpleBrowser 3.0</strong> — Advanced Anti-Detect Browser Manager<br><br>
+                            Features:<br>
+                            • Multi-profile management with isolated browser instances<br>
+                            • Advanced fingerprint spoofing (Canvas, WebGL, Audio, ClientRects)<br>
+                            • Proxy validation and auto-matching<br>
+                            • Cookie import/export<br>
+                            • Extension manager<br>
+                            • Built-in Chromium downloader<br><br>
+                            Inspired by AdsPower and Dolphin Anty
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            refreshChromiumStatus();
+        }
+
+        // Refresh Chromium status
+        async function refreshChromiumStatus() {
+            const infoDiv = document.getElementById('chromium-info');
+            if (!infoDiv) return;
+            
+            infoDiv.innerHTML = '<div class="spinner"></div> Checking...';
+            
+            try {
+                const res = await fetch('/api/chromium/status');
+                const data = await res.json();
+                
+                if (data.available) {
+                    infoDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            ✓ Chromium detected<br>
+                            <small style="opacity: 0.8;">${data.path}</small>
+                        </div>
+                    `;
+                } else {
+                    infoDiv.innerHTML = `
+                        <div class="alert alert-error">
+                            ✗ Chromium not found<br>
+                            <small>Click "Download Chrome for Testing" to install</small>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                infoDiv.innerHTML = '<div class="alert alert-error">Failed to check Chromium status</div>';
+            }
+        }
+
+        // Download Chromium
+        async function downloadChromium() {
+            const infoDiv = document.getElementById('chromium-info');
+            infoDiv.innerHTML = '<div class="alert alert-info"><div class="spinner"></div> Downloading Chromium... This may take a few minutes.</div>';
+            
+            try {
+                await fetch('/api/chromium/download', {method: 'POST'});
+                // Wait a bit then refresh
+                setTimeout(() => refreshChromiumStatus(), 2000);
+            } catch (e) {
+                infoDiv.innerHTML = '<div class="alert alert-error">Failed to start download</div>';
+            }
+        }
+
+        // Install extension (old method - kept for compatibility)
+        function installExtension() {
+            alert('Extension installation requires manual setup. Place extension folders in the user_extensions/ directory.');
+        }
+
+        // Import CRX extension
+        function importExtensionCRX() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.crx';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                // Upload the file to server
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                fetch('/api/extensions/import', {
+                    method: 'POST',
+                    body: formData
+                }).then(res => res.json()).then(data => {
+                    if (data.success) {
+                        alert(`Extension "${data.extension.name}" imported successfully!`);
+                        loadExtensionsView();
+                    } else {
+                        alert(`Import failed: ${data.error}`);
+                    }
+                }).catch(err => {
+                    alert(`Import error: ${err.message}`);
+                });
+            };
+            input.click();
+        }
+
+        // Import extension from folder
+        function importExtensionFolder() {
+            const path = prompt('Enter the full path to the extension folder (e.g., /path/to/extension):');
+            if (!path) return;
+            
+            fetch('/api/extensions/import', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({path: path, type: 'folder'})
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    alert(`Extension "${data.extension.name}" imported successfully!`);
+                    loadExtensionsView();
+                } else {
+                    alert(`Import failed: ${data.error}`);
+                }
+            }).catch(err => {
+                alert(`Import error: ${err.message}`);
+            });
+        }
+
+        // Load countries
+        async function loadCountries() {
+            const res = await fetch('/api/countries');
+            countries = await res.json();
+            
+            const tzSelect = document.getElementById('timezone');
+            const langSelect = document.getElementById('language');
+            
+            countries.forEach(c => {
+                const tzOpt = document.createElement('option');
+                tzOpt.value = c.tz;
+                tzOpt.textContent = `${c.tz} (${c.name})`;
+                tzSelect.appendChild(tzOpt);
+                
+                const langOpt = document.createElement('option');
+                langOpt.value = c.lang;
+                langOpt.textContent = `${c.lang} (${c.name})`;
+                langSelect.appendChild(langOpt);
+            });
+        }
+
+        // Load profiles
+        async function loadProfiles() {
+            const res = await fetch('/api/profiles');
+            profiles = await res.json();
+            renderProfiles();
+        }
+
+        // Check Chromium
+        async function checkChromium() {
+            const res = await fetch('/api/chromium/status');
+            const data = await res.json();
+            
+            const statusDot = document.getElementById('chromium-status');
+            const statusText = document.getElementById('chromium-text');
+            
+            if (data.available) {
+                statusDot.classList.remove('offline');
+                statusText.textContent = 'Chromium Ready';
+            } else {
+                statusDot.classList.add('offline');
+                statusText.textContent = 'Chromium Missing';
+            }
+        }
+
+        // Render profiles
+        function renderProfiles() {
+            const content = document.getElementById('content');
+            
+            if (profiles.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>No profiles yet</h3>
+                        <p>Create your first profile to get started</p>
+                        <button class="btn btn-primary" onclick="openProfileEditor()">
+                            ➕ Create Profile
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            content.innerHTML = `
+                <div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="select-all" onchange="toggleSelectAll()">
+                        <span>Select All</span>
+                    </label>
+                    <button class="btn btn-danger" onclick="deleteSelectedProfiles()" id="delete-selected-btn" style="display: none;">
+                        🗑 Delete Selected
+                    </button>
+                </div>
+                <div class="profile-grid">
+                    ${profiles.map(p => `
+                        <div class="profile-card">
+                            <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 12px;">
+                                <input type="checkbox" class="profile-checkbox" data-id="${p.id}" onchange="updateSelectionUI()">
+                                <div style="flex: 1;">
+                                    <div class="profile-header">
+                                        <div class="profile-name">${p.name}</div>
+                                        <div class="profile-status ${p.running ? 'status-running' : 'status-stopped'}">
+                                            ${p.running ? '● Running' : '○ Stopped'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="profile-info">
+                                <div class="info-row">
+                                    <span class="info-label">Proxy</span>
+                                    <span class="info-value">${p.proxy_type !== 'none' ? p.proxy_host : 'None'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Resolution</span>
+                                    <span class="info-value">${p.resolution}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Timezone</span>
+                                    <span class="info-value">${p.timezone}</span>
+                                </div>
+                            </div>
+                            <div class="profile-actions">
+                                ${p.running ? `
+                                    <button class="btn btn-danger" onclick="stopProfile('${p.id}')">
+                                        ■ Stop
+                                    </button>
+                                ` : `
+                                    <button class="btn btn-success" onclick="launchProfile('${p.id}')">
+                                        ▶ Open
+                                    </button>
+                                `}
+                                <button class="btn btn-ghost" onclick="editProfile('${p.id}')">
+                                    ✎ Edit
+                                </button>
+                                <button class="btn btn-danger" onclick="deleteProfile('${p.id}')">
+                                    🗑
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Toggle select all profiles
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('select-all').checked;
+            document.querySelectorAll('.profile-checkbox').forEach(cb => {
+                cb.checked = selectAll;
+            });
+            updateSelectionUI();
+        }
+
+        // Update selection UI
+        function updateSelectionUI() {
+            const checkboxes = document.querySelectorAll('.profile-checkbox');
+            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            const deleteBtn = document.getElementById('delete-selected-btn');
+            
+            if (checkedCount > 0) {
+                deleteBtn.style.display = 'inline-flex';
+                deleteBtn.textContent = `🗑 Delete Selected (${checkedCount})`;
+            } else {
+                deleteBtn.style.display = 'none';
+            }
+            
+            // Update select all checkbox state
+            const selectAll = document.getElementById('select-all');
+            if (selectAll) {
+                selectAll.checked = checkedCount === checkboxes.length && checkboxes.length > 0;
+            }
+        }
+
+        // Delete selected profiles
+        async function deleteSelectedProfiles() {
+            const checkboxes = document.querySelectorAll('.profile-checkbox:checked');
+            const ids = Array.from(checkboxes).map(cb => cb.dataset.id);
+            
+            if (ids.length === 0) return;
+            
+            if (!confirm(`Delete ${ids.length} selected profile(s) and all their data?`)) return;
+            
+            for (const id of ids) {
+                await fetch(`/api/profiles/${id}`, {method: 'DELETE'});
+            }
+            
+            await loadProfiles();
+        }
+
+        // Setup tabs
+        function setupTabs() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+                });
+            });
+        }
+
+        // Open profile editor
+        function openProfileEditor(profile = null) {
+            editingProfile = profile;
+            document.getElementById('modal-title').textContent = profile ? 'Edit Profile' : 'New Profile';
+            
+            if (profile) {
+                document.getElementById('profile-name').value = profile.name || '';
+                document.getElementById('profile-notes').value = profile.notes || '';
+                document.getElementById('proxy-type').value = profile.proxy_type || 'none';
+                document.getElementById('proxy-host').value = profile.proxy_host || '';
+                document.getElementById('proxy-port').value = profile.proxy_port || '';
+                document.getElementById('proxy-user').value = profile.proxy_user || '';
+                document.getElementById('proxy-pass').value = profile.proxy_pass || '';
+                document.getElementById('user-agent').value = profile.user_agent || '';
+                document.getElementById('resolution').value = profile.resolution || '1920x1080';
+                document.getElementById('timezone').value = profile.timezone || 'America/New_York';
+                document.getElementById('language').value = profile.language || 'en-US';
+                document.getElementById('webrtc').value = profile.webrtc || 'disabled';
+                document.getElementById('webgl-vendor').value = profile.webgl_vendor || '';
+                document.getElementById('webgl-renderer').value = profile.webgl_renderer || '';
+                document.getElementById('hardware-concurrency').value = profile.hardware_concurrency || 8;
+                document.getElementById('device-memory').value = profile.device_memory || 8;
+                
+                // Initialize proxy fields state
+                toggleProxyFields();
+            } else {
+                randomizeUA();
+                toggleProxyFields();
+            }
+            
+            document.getElementById('profile-modal').classList.add('active');
+        }
+
+        // Close profile editor
+        function closeProfileEditor() {
+            document.getElementById('profile-modal').classList.remove('active');
+            editingProfile = null;
+        }
+
+        // Edit profile
+        function editProfile(id) {
+            const profile = profiles.find(p => p.id === id);
+            if (profile) {
+                openProfileEditor(profile);
+            }
+        }
+
+        // Save profile
+        async function saveProfile() {
+            const data = {
+                name: document.getElementById('profile-name').value,
+                notes: document.getElementById('profile-notes').value,
+                proxy_type: document.getElementById('proxy-type').value,
+                proxy_host: document.getElementById('proxy-host').value,
+                proxy_port: document.getElementById('proxy-port').value,
+                proxy_user: document.getElementById('proxy-user').value,
+                proxy_pass: document.getElementById('proxy-pass').value,
+                user_agent: document.getElementById('user-agent').value,
+                resolution: document.getElementById('resolution').value,
+                timezone: document.getElementById('timezone').value,
+                language: document.getElementById('language').value,
+                webrtc: document.getElementById('webrtc').value,
+                canvas_spoof: document.querySelector('input[name="canvas"]:checked').value,
+                webgl_spoof: document.querySelector('input[name="webgl"]:checked').value,
+                webgl_vendor: document.getElementById('webgl-vendor').value,
+                webgl_renderer: document.getElementById('webgl-renderer').value,
+                audio_spoof: document.querySelector('input[name="audio"]:checked').value,
+                hardware_concurrency: parseInt(document.getElementById('hardware-concurrency').value),
+                device_memory: parseInt(document.getElementById('device-memory').value),
+            };
+
+            if (editingProfile) {
+                await fetch(`/api/profiles/${editingProfile.id}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+            } else {
+                await fetch('/api/profiles', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+            }
+
+            closeProfileEditor();
+            await loadProfiles();
+        }
+
+        // Delete profile
+        async function deleteProfile(id) {
+            if (!confirm('Delete this profile and all its data?')) return;
+            
+            await fetch(`/api/profiles/${id}`, {method: 'DELETE'});
+            await loadProfiles();
+        }
+
+        // Launch profile
+        async function launchProfile(id) {
+            addDebugLog(`Launching profile ${id}...`, 'info');
+            
+            try {
+                const res = await fetch(`/api/profiles/${id}/launch`, {method: 'POST'});
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    addDebugLog(`✗ Launch failed: ${data.error}`, 'error');
+                    alert(data.error || 'Failed to launch');
+                } else {
+                    addDebugLog(`✓ Profile launched (PID: ${data.debug.pid})`, 'success');
+                    
+                    // Log proxy information
+                    if (data.debug.proxy_info.type !== 'none') {
+                        addDebugLog(`  Proxy: ${data.debug.proxy_info.type.toUpperCase()} ${data.debug.proxy_info.host}:${data.debug.proxy_info.port}`, 'info');
+                        if (data.debug.proxy_info.has_auth) {
+                            addDebugLog(`  Proxy auth: enabled`, 'info');
+                        }
+                    } else {
+                        addDebugLog(`  Proxy: none (direct connection)`, 'info');
+                    }
+                    
+                    // Log Chrome arguments (first 10)
+                    addDebugLog(`  Chrome arguments (${data.debug.chrome_args.length} total):`, 'info');
+                    data.debug.chrome_args.slice(0, 10).forEach(arg => {
+                        addDebugLog(`    ${arg}`, 'info');
+                    });
+                    if (data.debug.chrome_args.length > 10) {
+                        addDebugLog(`    ... and ${data.debug.chrome_args.length - 10} more`, 'info');
+                    }
+                    
+                    await loadProfiles();
+                }
+            } catch (error) {
+                addDebugLog(`✗ Launch error: ${error.message}`, 'error');
+                alert(`Launch error: ${error.message}`);
+            }
+        }
+
+        // Stop profile
+        async function stopProfile(id) {
+            await fetch(`/api/profiles/${id}/stop`, {method: 'POST'});
+            await loadProfiles();
+        }
+
+        // Toggle proxy fields based on proxy type
+        function toggleProxyFields() {
+            const proxyType = document.getElementById('proxy-type').value;
+            const proxyFields = document.getElementById('proxy-fields');
+            const inputs = proxyFields.querySelectorAll('input');
+            
+            if (proxyType === 'none') {
+                proxyFields.style.opacity = '0.4';
+                proxyFields.style.pointerEvents = 'none';
+                inputs.forEach(input => input.disabled = true);
+            } else {
+                proxyFields.style.opacity = '1';
+                proxyFields.style.pointerEvents = 'auto';
+                inputs.forEach(input => input.disabled = false);
+            }
+        }
+
+        // Parse proxy string (IP:PORT or IP:PORT:USER:PASS)
+        function parseProxyString() {
+            const proxyString = document.getElementById('proxy-paste').value.trim();
+            if (!proxyString) {
+                addDebugLog('❌ No proxy string provided', 'error');
+                return;
+            }
+            
+            const parts = proxyString.split(':');
+            
+            if (parts.length === 2) {
+                // IP:PORT format
+                document.getElementById('proxy-host').value = parts[0];
+                document.getElementById('proxy-port').value = parts[1];
+                document.getElementById('proxy-user').value = '';
+                document.getElementById('proxy-pass').value = '';
+                addDebugLog(`✓ Parsed: ${parts[0]}:${parts[1]} (no auth)`, 'success');
+            } else if (parts.length === 4) {
+                // IP:PORT:USER:PASS format
+                document.getElementById('proxy-host').value = parts[0];
+                document.getElementById('proxy-port').value = parts[1];
+                document.getElementById('proxy-user').value = parts[2];
+                document.getElementById('proxy-pass').value = parts[3];
+                addDebugLog(`✓ Parsed: ${parts[0]}:${parts[1]} (with auth)`, 'success');
+            } else {
+                addDebugLog('❌ Invalid format. Use IP:PORT or IP:PORT:USER:PASS', 'error');
+            }
+            
+            // Enable proxy fields if they were disabled
+            if (document.getElementById('proxy-type').value === 'none') {
+                document.getElementById('proxy-type').value = 'http';
+                toggleProxyFields();
+            }
+        }
+
+        // Add debug log entry
+        function addDebugLog(message, type = 'info') {
+            const logDiv = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                info: 'var(--text-secondary)',
+                success: 'var(--success)',
+                error: 'var(--danger)',
+                warning: 'var(--warning)'
+            };
+            
+            const entry = document.createElement('div');
+            entry.style.color = colors[type] || colors.info;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // Clear debug log
+        function clearDebugLog() {
+            const logDiv = document.getElementById('debug-log');
+            logDiv.innerHTML = '<div style="color: var(--text-muted);">Debug log cleared...</div>';
+        }
+
+        // Test proxy connection
+        async function testProxyConnection() {
+            const proxyType = document.getElementById('proxy-type').value;
+            
+            if (proxyType === 'none') {
+                addDebugLog('Testing direct connection (no proxy)...', 'info');
+                
+                try {
+                    const startTime = Date.now();
+                    const response = await fetch('https://httpbin.org/ip', { 
+                        mode: 'cors',
+                        cache: 'no-cache'
+                    });
+                    const elapsed = Date.now() - startTime;
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        addDebugLog(`✓ Direct connection successful (${elapsed}ms)`, 'success');
+                        addDebugLog(`  Your IP: ${data.origin}`, 'info');
+                    } else {
+                        addDebugLog(`✗ Connection failed: HTTP ${response.status}`, 'error');
+                    }
+                } catch (error) {
+                    addDebugLog(`✗ Connection error: ${error.message}`, 'error');
+                }
+                
+                return;
+            }
+            
+            const host = document.getElementById('proxy-host').value;
+            const port = document.getElementById('proxy-port').value;
+            
+            if (!host || !port) {
+                addDebugLog('❌ Please enter proxy host and port', 'error');
+                return;
+            }
+            
+            addDebugLog(`Testing ${proxyType.toUpperCase()} proxy: ${host}:${port}...`, 'info');
+            addDebugLog('Note: Browser proxy testing is limited. Use "Validate Proxy" for full test.', 'warning');
+            
+            try {
+                // Try to fetch through proxy (this may not work in all browsers)
+                const startTime = Date.now();
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                const response = await fetch('https://httpbin.org/ip', {
+                    mode: 'cors',
+                    cache: 'no-cache',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                const elapsed = Date.now() - startTime;
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addDebugLog(`✓ Connection successful (${elapsed}ms)`, 'success');
+                    addDebugLog(`  IP seen: ${data.origin}`, 'info');
+                    addDebugLog('  Note: This tests browser connectivity, not proxy itself', 'warning');
+                } else {
+                    addDebugLog(`✗ HTTP error: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    addDebugLog('✗ Connection timeout (10s)', 'error');
+                } else {
+                    addDebugLog(`✗ Error: ${error.message}`, 'error');
+                }
+                addDebugLog('  This is expected in browsers. Use "Validate Proxy" button instead.', 'info');
+            }
+        }
+
+        // Validate proxy
+        async function validateProxy() {
+            const resultDiv = document.getElementById('proxy-result');
+            resultDiv.innerHTML = '<div class="alert alert-info"><div class="spinner"></div> Validating...</div>';
+
+            const proxyType = document.getElementById('proxy-type').value;
+            const host = document.getElementById('proxy-host').value;
+            const port = document.getElementById('proxy-port').value;
+            const username = document.getElementById('proxy-user').value;
+            const password = document.getElementById('proxy-pass').value;
+
+            addDebugLog(`Validating ${proxyType.toUpperCase()} proxy: ${host}:${port}`, 'info');
+
+            const data = {
+                proxy_type: proxyType,
+                host: host,
+                port: port,
+                username: username,
+                password: password,
+            };
+
+            try {
+                const res = await fetch('/api/validate-proxy', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    addDebugLog(`✓ Proxy validation successful`, 'success');
+                    addDebugLog(`  IP: ${result.ip}`, 'info');
+                    addDebugLog(`  Country: ${result.country} (${result.country_code})`, 'info');
+                    addDebugLog(`  Region: ${result.region}`, 'info');
+                    addDebugLog(`  City: ${result.city}`, 'info');
+                    addDebugLog(`  Timezone: ${result.timezone}`, 'info');
+                    addDebugLog(`  ISP: ${result.isp}`, 'info');
+                    addDebugLog(`  Latency: ${result.latency_ms}ms`, 'info');
+                    
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            ✓ Proxy Valid<br>
+                            IP: ${result.ip}<br>
+                            Country: ${result.country}<br>
+                            City: ${result.city}<br>
+                            Timezone: ${result.timezone}<br>
+                            Latency: ${result.latency_ms}ms
+                        </div>
+                    `;
+                } else {
+                    addDebugLog(`✗ Proxy validation failed: ${result.error}`, 'error');
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-error">
+                            ✗ Proxy Failed: ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                addDebugLog(`✗ Validation error: ${error.message}`, 'error');
+                resultDiv.innerHTML = `
+                    <div class="alert alert-error">
+                        ✗ Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-match
+        async function autoMatch() {
+            const resultDiv = document.getElementById('proxy-result');
+            resultDiv.innerHTML = '<div class="alert alert-info"><div class="spinner"></div> Matching...</div>';
+
+            const data = {
+                proxy_type: document.getElementById('proxy-type').value,
+                host: document.getElementById('proxy-host').value,
+                port: document.getElementById('proxy-port').value,
+                username: document.getElementById('proxy-user').value,
+                password: document.getElementById('proxy-pass').value,
+            };
+
+            const res = await fetch('/api/auto-match', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+
+            if (result.success) {
+                document.getElementById('user-agent').value = result.fingerprint.user_agent;
+                document.getElementById('timezone').value = result.fingerprint.timezone;
+                document.getElementById('language').value = result.fingerprint.language;
+                
+                resultDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        ✓ Matched to ${result.fingerprint.country}<br>
+                        Timezone: ${result.fingerprint.timezone}<br>
+                        Language: ${result.fingerprint.language}
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-error">
+                        ✗ Match Failed: ${result.error}
+                    </div>
+                `;
+            }
+        }
+
+        // Randomize UA
+        function randomizeUA() {
+            const ver = Math.floor(Math.random() * 7) + 125;
+            const templates = [
+                `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${ver}.0.0.0 Safari/537.36`,
+                `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${ver}.0.0.0 Safari/537.36`,
+                `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${ver}.0.0.0 Safari/537.36`,
+            ];
+            document.getElementById('user-agent').value = templates[Math.floor(Math.random() * templates.length)];
+        }
+
+        // Generate random fingerprint (all settings)
+        function generateRandomFingerprint() {
+            // Randomize User Agent
+            randomizeUA();
+            
+            // Randomize Resolution
+            const resolutions = ['1920x1080', '1366x768', '1536x864', '2560x1440', '3840x2160', '1440x900', '1280x720'];
+            document.getElementById('resolution').value = resolutions[Math.floor(Math.random() * resolutions.length)];
+            
+            // Randomize Timezone
+            const tzSelect = document.getElementById('timezone');
+            if (tzSelect.options.length > 0) {
+                tzSelect.selectedIndex = Math.floor(Math.random() * tzSelect.options.length);
+            }
+            
+            // Randomize Language
+            const langSelect = document.getElementById('language');
+            if (langSelect.options.length > 0) {
+                langSelect.selectedIndex = Math.floor(Math.random() * langSelect.options.length);
+            }
+            
+            // Randomize WebGL Vendor/Renderer
+            const webglOptions = [
+                { vendor: 'Google Inc. (NVIDIA)', renderer: 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1080 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)' },
+                { vendor: 'Google Inc. (NVIDIA)', renderer: 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
+                { vendor: 'Google Inc. (NVIDIA)', renderer: 'ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
+                { vendor: 'Google Inc. (AMD)', renderer: 'ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
+                { vendor: 'Google Inc. (AMD)', renderer: 'ANGLE (AMD, AMD Radeon RX 6800 XT Direct3D11 vs_5_0 ps_5_0, D3D11)' },
+                { vendor: 'Google Inc. (Intel)', renderer: 'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
+                { vendor: 'Google Inc. (Intel)', renderer: 'ANGLE (Intel, Intel(R) Iris(R) Xe Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)' },
+            ];
+            const webgl = webglOptions[Math.floor(Math.random() * webglOptions.length)];
+            document.getElementById('webgl-vendor').value = webgl.vendor;
+            document.getElementById('webgl-renderer').value = webgl.renderer;
+            
+            // Randomize Hardware
+            const cores = [2, 4, 6, 8, 12, 16];
+            document.getElementById('hardware-concurrency').value = cores[Math.floor(Math.random() * cores.length)];
+            
+            const memory = [2, 4, 8, 16, 32];
+            document.getElementById('device-memory').value = memory[Math.floor(Math.random() * memory.length)];
+            
+            // Set all spoofing to recommended settings
+            document.querySelectorAll('input[name="canvas"][value="noise"]').forEach(el => el.checked = true);
+            document.querySelectorAll('input[name="webgl"][value="custom"]').forEach(el => el.checked = true);
+            document.querySelectorAll('input[name="audio"][value="noise"]').forEach(el => el.checked = true);
+            
+            // Update radio button visual state
+            document.querySelectorAll('.radio-item').forEach(item => item.classList.remove('selected'));
+            document.querySelectorAll('input[type="radio"]:checked').forEach(el => {
+                el.closest('.radio-item').classList.add('selected');
+            });
+            
+            // Show success message
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success';
+            alert.style.position = 'fixed';
+            alert.style.top = '20px';
+            alert.style.right = '20px';
+            alert.style.zIndex = '9999';
+            alert.textContent = '✓ Random fingerprint generated!';
+            document.body.appendChild(alert);
+            setTimeout(() => alert.remove(), 3000);
+        }
+
+        // Export cookies
+        function exportCookies(format = 'json') {
+            if (!editingProfile) {
+                alert('Save the profile first before exporting cookies');
+                return;
+            }
+            
+            const ext = format === 'json' ? 'json' : 'txt';
+            const path = prompt(`Enter export path (e.g., /path/to/cookies.${ext}):`);
+            if (path) {
+                fetch(`/api/export-cookies/${editingProfile.id}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({path, format})
+                }).then(res => res.json()).then(data => {
+                    alert(data.success ? `Cookies exported as ${format.toUpperCase()}!` : 'Export failed');
+                });
+            }
+        }
+
+        // Import cookies
+        function importCookies(format = 'json') {
+            if (!editingProfile) {
+                alert('Save the profile first before importing cookies');
+                return;
+            }
+            
+            const ext = format === 'json' ? 'json' : 'txt';
+            const path = prompt(`Enter import path (e.g., /path/to/cookies.${ext}):`);
+            if (path) {
+                fetch(`/api/import-cookies/${editingProfile.id}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({path, format})
+                }).then(res => res.json()).then(data => {
+                    alert(data.success ? `Cookies imported from ${format.toUpperCase()}!` : 'Import failed');
+                });
+            }
+        }
+
+        // Export profile
+        function exportProfile() {
+            if (!editingProfile) {
+                alert('Save the profile first before exporting');
+                return;
+            }
+            
+            fetch(`/api/export-profile/${editingProfile.id}`)
+                .then(res => res.json())
+                .then(profile => {
+                    const dataStr = JSON.stringify(profile, null, 2);
+                    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                    const url = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `profile_${profile.name.replace(/\s+/g, '_')}.json`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                });
+        }
+
+        // Import profile
+        function importProfile() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const profile = JSON.parse(event.target.result);
+                        fetch('/api/import-profile', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(profile)
+                        }).then(res => res.json()).then(data => {
+                            if (data.success) {
+                                alert('Profile imported successfully!');
+                                loadProfiles();
+                            } else {
+                                alert('Import failed');
+                            }
+                        });
+                    } catch (e) {
+                        alert('Invalid profile file');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // Open virtual camera configuration
+        function openVirtualCamera() {
+            alert('Virtual Camera is controlled via the Chrome extension popup.\n\n' +
+                  'After launching the profile, click the extension icon in the Chrome toolbar to configure the virtual camera.\n\n' +
+                  'You can:\n' +
+                  '• Upload custom images or videos\n' +
+                  '• Apply transformations (scale, rotate, offset)\n' +
+                  '• Add motion effects (circular, horizontal, vertical)\n' +
+                  '• Control animation speed and range');
+        }
+
+        // Radio button selection
+        document.addEventListener('change', (e) => {
+            if (e.target.type === 'radio') {
+                const group = e.target.closest('.radio-group');
+                group.querySelectorAll('.radio-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+                e.target.closest('.radio-item').classList.add('selected');
+            }
+        });
+
+        // Initialize app
+        init();
+    </script>
+</body>
+</html>

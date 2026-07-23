@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "SimpleBrowser Fingerprint Shield",
+  "version": "2.0.0",
+  "description": "Anti-detect fingerprint protection for SimpleBrowser profiles",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["loader.js"],
+      "run_at": "document_start",
+      "world": "ISOLATED",
+      "all_frames": true
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
